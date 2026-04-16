@@ -26,6 +26,14 @@
         <UnitName Value="uDarkStyleParams"/>
       </Item>
       <Item>
+        <Filename Value="src\udarkstyleschemes.pas"/>
+        <UnitName Value="uDarkStyleSchemes"/>
+      </Item>
+      <Item>
+        <Filename Value="src\udarkstyleschemesloader.pas"/>
+        <UnitName Value="uDarkStyleSchemesLoader"/>
+      </Item>
+      <Item>
         <Filename Value="src\udarkstyleschemesadditional.pas"/>
         <UnitName Value="uDarkStyleSchemesAdditional"/>
       </Item>

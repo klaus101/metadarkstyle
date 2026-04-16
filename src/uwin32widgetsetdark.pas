@@ -685,6 +685,8 @@ function FormWndProc2(Window: HWnd; Msg: UInt; WParam: Windows.WParam;
 var
   DC: HDC;
   R: TRect;
+  Info: PWin32WindowInfo;
+  Form: TCustomForm;
 begin
   case Msg of
     WM_NCACTIVATE,
@@ -702,6 +704,24 @@ begin
       AllowDarkModeForWindow(Window, True);
       RefreshTitleBarThemeColor(Window);
       Result:= CallWindowProc(CustomFormWndProc, Window, Msg, wParam, lParam);
+    end;
+    WM_THEMECHANGED:
+    begin
+      Result:= CallWindowProc(CustomFormWndProc, Window, Msg, wParam, lParam);
+      AllowDarkModeForWindow(Window, True);
+      RefreshTitleBarThemeColor(Window);
+      Info:= GetWin32WindowInfo(Window);
+      if Assigned(Info) and Assigned(Info^.WinControl) and (Info^.WinControl is TCustomForm) then
+      begin
+        Form:= TCustomForm(Info^.WinControl);
+        if Assigned(Form.Menu) then
+        begin
+          Form.Menu.OwnerDraw:= True;
+          SetMenuBackground(GetMenu(Window));
+          Form.Menu.OwnerDraw:= False;
+        end;
+      end;
+      InvalidateRect(Window, nil, True);
     end
     else begin
       Result:= CallWindowProc(CustomFormWndProc, Window, Msg, wParam, lParam);

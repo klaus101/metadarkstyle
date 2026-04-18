@@ -1848,15 +1848,35 @@ var
   LCanvas: TCanvas;
   AStyle: TTextStyle;
   BtnSym: string;
+  grpRect: TRect; bIsHot, bDarkColors: Boolean;
+  sb_bkgnd, sb_gripbg, sv_gripframe, sb_gripHot, sb_gripHotFrame, sb_ArrDisabled, sb_ArrHotBg, sb_ArrHot : TColor;
 begin
+  bDarkColors := not (SysColor[0] = 13158600);  // Determine whether SysColors 'DefaultDark' or 'DefaultWhite' are used
+  if bDarkColors then begin
+     sb_bkgnd   := SysColor[COLOR_BTNSHADOW];       sb_gripbg := RGBToColor(77, 77, 77);
+     sb_gripHot := RGBToColor(88, 88, 88);          sb_gripHotFrame := SysColor[COLOR_GRAYTEXT];
+     sb_ArrDisabled := RGBToColor(82, 82, 82);      sb_ArrHot := SysColor[COLOR_HIGHLIGHTTEXT];
+     sb_ArrHotBg := SysColor[COLOR_SCROLLBAR];
+  end else begin
+    sb_bkgnd   := SysColor[COLOR_3DLIGHT];          sb_gripbg := RGBToColor(210, 210, 210); //SysColor[COLOR_SCROLLBAR];
+    sb_gripHot := RGBToColor(188, 188, 188);        sb_gripHotFrame := SysColor[COLOR_GRAYTEXT];
+    sb_ArrDisabled := SysColor[COLOR_ACTIVEBORDER]; sb_ArrHot := SysColor[COLOR_WINDOWTEXT];
+    sb_ArrHotBg := RGBToColor(210, 210, 210);
+  end;
   LCanvas:= TCanvas.Create;
   try
+    bIsHot := False;
     LCanvas.Handle:= HDC;
 
     case iPartId of
       SBP_ARROWBTN:begin
-        LCanvas.Brush.Color:= SysColor[COLOR_BTNFACE];
-        LCanvas.FillRect(pRect);
+        LCanvas.Brush.Color:= sb_bkgnd;
+        if iStateId in [ABS_UPHOT,ABS_DOWNHOT, ABS_LEFTHOT,ABS_RIGHTHOT,
+                        ABS_UPPRESSED,ABS_DOWNPRESSED, ABS_LEFTPRESSED,ABS_RIGHTPRESSED] then
+            LCanvas.Brush.Color:= sb_ArrHotBg
+        else
+            LCanvas.Brush.Color:= sb_bkgnd;
+        LCanvas.FillRect(pRect);      // Does mainly affect the background of the arrow btn area
 
         AStyle:= LCanvas.TextStyle;
         AStyle.Alignment:= taCenter;
@@ -1888,12 +1908,12 @@ begin
 
         if iStateId in [ABS_UPDISABLED,ABS_DOWNDISABLED,
                         ABS_LEFTDISABLED,ABS_RIGHTDISABLED] then
-          LCanvas.Font.Color:= SysColor[COLOR_WINDOW]
+          LCanvas.Font.Color:= sb_ArrDisabled
         else if iStateId in [ABS_UPHOT,ABS_DOWNHOT,
                              ABS_LEFTHOT,ABS_RIGHTHOT,
                              ABS_UPPRESSED,ABS_DOWNPRESSED,
                              ABS_LEFTPRESSED,ABS_RIGHTPRESSED] then
-          LCanvas.Font.Color:= SysColor[COLOR_HIGHLIGHT]
+          LCanvas.Font.Color:= sb_ArrHot
         else begin
           LCanvas.Font.Color:= SysColor[COLOR_GRAYTEXT];//RGBToColor(192, 192, 192);
         end;
@@ -1909,13 +1929,39 @@ begin
                              ABS_LEFTPRESSED,ABS_RIGHTPRESSED] then
           LCanvas.Brush.Color:= SysColor[COLOR_HIGHLIGHT]
         else begin
-          LCanvas.Brush.Color:= SysColor[COLOR_GRAYTEXT];//RGBToColor(192, 192, 192);
+          LCanvas.Brush.Color:= SysColor[COLOR_GRAYTEXT];
         end;
-        LCanvas.Pen.Color:=LCanvas.Brush.Color;
-        LCanvas.FrameRect(pRect{, 10, 10});
+        LCanvas.Pen.Color:= LCanvas.Brush.Color;
+
+        // --- Draw the inner gripper:
+        LCanvas.Brush.Color:= sb_gripbg;
+        if iStateId in [ABS_UPHOT,ABS_DOWNHOT, ABS_LEFTHOT,ABS_RIGHTHOT,
+                       ABS_UPPRESSED,ABS_DOWNPRESSED, ABS_LEFTPRESSED,ABS_RIGHTPRESSED] then begin
+           LCanvas.Brush.Color:= sb_gripHot;
+           bIsHot := True;
+        end;
+        grpRect := pRect;
+        if (iPartId = SBP_GRIPPERHORZ) then begin
+           if ((pRect.Bottom - pRect.Top) > 17) then begin
+              Inc(grpRect.Top, 3);
+              Dec(grpRect.Bottom, 3);
+           end;
+        end else begin  // iPartId SBP_GRIPPERVERT
+           if ((pRect.Right - pRect.Left) > 19) then begin
+              Inc(grpRect.Left, 2);
+              if bDarkColors then
+                 Dec(grpRect.Right, 2);
+           end;
+        end;
+        LCanvas.FillRect(grpRect);
+
+        if bIsHot then begin
+           LCanvas.Brush.Color:= sb_gripHotFrame;
+           LCanvas.FrameRect(grpRect);
+        end;
       end;
       else begin
-        LCanvas.Brush.Color:= SysColor[COLOR_BTNFACE];
+        LCanvas.Brush.Color:= sb_bkgnd;
         LCanvas.Pen.Color:=LCanvas.Brush.Color;
         LCanvas.FillRect(pRect);
       end;
